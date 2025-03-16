@@ -1,7 +1,11 @@
-function [CorrectedImgStr] = OCT_Dewarp_BL(uncorrectedimg)
+function [CorrectedImgStr] = OCT_Dewarp_BL(uncorrectedimg, debug)
 % this step initializes this whole function. an image "uncorrectedimg" is
 % being passed through function
+% If debug = 1, variables passed to and returned from subfunctions are saved for debugging
 
+if nargin < 2
+    debug = 0; % Default to no debugging
+end
 
 % -------------------------------------------------------------------------- Initialization of variables:
 disp('loading vars')
@@ -164,6 +168,24 @@ im_s = original; % this is the uint8 image
 
 % -------------- Call function "InnerDewarp" to dewarp "dewarpedOut" image (when light passes through inner cornea interface):
 [dewarpedFull,x_s2,y_s2] = InnerDewarp(im_s, dewarpedOut, D, w, d, n_tissue1, n_tissue2, x_dimension, y_dimension, PPout, PPinn, ShowColors);
+
+% If debug mode is enabled, save all inputs and outputs of subfunctions
+if debug == 1
+    disp('Saving debug variables...');
+
+    % Extract filename without extension
+    [~, name, ~] = fileparts(uncorrectedimg);
+
+    save([name, '.mat'], ... 
+         'originalgrayrsz', ... % input of OCT_OuterCornea()
+         'Extcornea', ... % output of OCT_OuterCornea() and input of OCT_InnerCornea()
+         'Intcornea', ... % output of OCT_InnerCornea()
+         'im_s', 'im_t', 'D', 'w', 'd', 'n_tissue1', ... 
+         'x_dimension', 'y_dimension', 'PPout', 'ShowColors', ... % input of OuterDewarp()
+         'dewarpedOut', 'x_s1', 'y_s1', ... % output of OuterDewarp()
+         'n_tissue2', 'PPinn', ... % input of InnerDewarp()
+         'dewarpedFull', 'x_s2', 'y_s2'); % output of InnerDewarp()
+end
 
 % ---------------------------------------------------------------------------------------------------
 % ---------------------------------------- Save variables in output structure:
