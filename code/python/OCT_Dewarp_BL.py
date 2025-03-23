@@ -174,7 +174,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     y = y[idx]
 
     PPout = CubicSpline(x-n_t/2,m_t/2-y)
-    yout = (m_t/2)-PPout,((xq)-n_t/2)
+    yout = (m_t/2)-PPout((xq)-n_t/2)
 
     x=x_inner_Cornea[::50]
     y=y_inner_Cornea[::50]
