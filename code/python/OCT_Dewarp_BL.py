@@ -149,7 +149,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     y = y[idx]
 
     PPinn = CubicSpline(x-n_t/2,m_t/2-y)
-    yin = (m_t/2)-PPinn,((xq)-n_t/2)
+    yin = (m_t/2)-PPinn((xq)-n_t/2)
     minvyin = np.min(yin)
     minpyin = np.argmin(yin)
     signyin = np.sign(np.concatenate(([-1], np.diff(yin))))
