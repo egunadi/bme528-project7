@@ -37,7 +37,7 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     f_t = f/d*m_t # focal length in target coordinates
 
     # maximal angle, scaled
-    phi_sc = np.asin(w/2/f)/(n_s/2)
+    phi_sc = np.arcsin(w/2/f)/(n_s/2)
 
     # define all target pixel pairs
     x_t,y_t = np.meshgrid(np.arange(-n_t/2,n_t/2),np.arange(m_t/2,-1,-m_t/2))
@@ -46,7 +46,7 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     #====================================================================
     # calculate corresponding source pixel, 
     # taking beam scanning into account 
-    x_s = np.atan2(x_t,f_t-y_t)/phi_sc
+    x_s = np.arctan2(x_t,f_t-y_t)/phi_sc
     y_s = f_s-np.sqrt(x_t**2 + (f_t-y_t)**2)*m_s/m_t
 
 
