@@ -280,7 +280,9 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     x_coords = x_s + n_s / 2
     y_coords = -y_s + m_s / 2
     coordinates = np.vstack((y_coords.ravel(), x_coords.ravel()))
-    im_t_channel_2 = map_coordinates(im_s[:, :, 0], coordinates, order=1).reshape(im_s.shape[0], im_s.shape[1])
+
+    im_t_channel_2 = map_coordinates(im_s[:, :, 0], coordinates, order=1).reshape(y_s.shape)
+
     im_t[:, :, 1] = im_t_channel_2
     im_t[:, :, 0] = im_t[:, :, 1]
     im_t[:, :, 2] = im_t[:, :, 1]
