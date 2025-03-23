@@ -79,7 +79,7 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     # logspace(step_size_max,step_size_min,n_step_size);
 
     # reserve space for pathlength array
-    L_m = np.zeros((2*n_steps-1)**2,n_t)
+    L_m = np.zeros(((2*n_steps-1)**2,n_t))
 
 
     # all point in a line and the coresponding boundary
