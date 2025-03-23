@@ -36,7 +36,7 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     #====================================================================
     # calculate corresponding source pixel,
     # taking beam scanning into account
-    x_s = np.atan2(x_t,f_t-y_t)/phi_sc
+    x_s = np.arctan2(x_t,f_t-y_t)/phi_sc
     y_s = f_s-np.sqrt(x_t**2 + (f_t-y_t)**2)*m_s/m_t
 
     #====================================================================
