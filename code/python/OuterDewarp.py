@@ -26,7 +26,7 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     f_t = f/d*m_t # focal length in target coordinates
 
     # maximal angle, scaled
-    phi_sc = np.asin(w/2/f)/(n_s/2)
+    phi_sc = np.arcsin(w/2/f)/(n_s/2)
 
     # define all target pixel pairs
     x_t,y_t = np.meshgrid(np.arange(-n_t/2,n_t/2),np.arange(m_t/2,-1,-m_t/2))
