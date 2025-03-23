@@ -107,7 +107,9 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     y = np.polyval(P, xq)
     # polyval is built in matlab function that evaluates a polynomial
 
-    y = y(x)
+    idx = np.searchsorted(xq, x)
+    idx = np.clip(idx, 0, len(y) - 1)
+    y = y[idx]
     # ??????????????????
 
     # its just made a curved line (quadratic curve) that at this point isnt
