@@ -8,7 +8,7 @@ from scipy.interpolate import CubicSpline
 
 from PIL import Image #for resizing and saving image
 
-def OCT_Dewarp_BL(uncorrectedimg):
+def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     # this step initializes this whole function. an image "uncorrectedimg" is
     # being passed through function
 
@@ -216,4 +216,37 @@ def OCT_Dewarp_BL(uncorrectedimg):
     # file type. Imsubtract will guarantee whether our MATLAB code produced RF
     # image matches the reference we were given.
 
-    return CorrectedImgStr
+    if debug:
+        debug_vars = {
+            # input of OCT_OuterCornea()
+            'originalgrayrsz': originalgrayrsz, 
+            # output of OCT_OuterCornea() and input of OCT_InnerCornea()
+            'Extcornea': Extcornea, 
+            # output of OCT_InnerCornea()
+            'Intcornea': Intcornea, 
+            # input of OuterDewarp()
+            'im_s': im_s,  
+            'im_t': im_t,
+            'D': D,
+            'w': w,
+            'd': d,
+            'n_tissue1': n_tissue1,
+            'x_dimension': x_dimension,
+            'y_dimension': y_dimension,
+            'PPout': PPout.c, # use just the spline coefficients  
+            'ShowColors': ShowColors,
+            # output of OuterDewarp()
+            'dewarpedOut': dewarpedOut,
+            'x_s1': x_s1,
+            'y_s1': y_s1,
+            # input of InnerDewarp()
+            'n_tissue2': n_tissue2,
+            'PPinn': PPinn.c, # use just the spline coefficients
+            # output of InnerDewarp()
+            'dewarpedFull': dewarpedFull,
+            'x_s2': x_s2,
+            'y_s2': y_s2
+        }
+        return CorrectedImgStr, debug_vars
+    else:
+        return CorrectedImgStr
