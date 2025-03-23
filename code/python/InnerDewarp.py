@@ -143,7 +143,27 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
                     y_um = np.interp(x_um,B_u_steps,B_u_LUT)
                     # calc values not dependant on (xl,yl)
                     L_u  = ((x_um)**2+(f_t-y_um)**2)**0.5       						 # distance lens and (xu,yu)
-                    L_hb = ((x_tm-x_um)**2+(y_tm-y_um)**2)**0.5 * n_tissue_u  # distance (xu,yu) and (xt,yt)
+                    
+                    x_tm = np.array(x_t[int(j_start_u), :])  # Make sure it's an array
+                    x_um = x_tm.copy()                       # or however you're computing this
+
+                    y_tm = m_t / 2 - PP_u(x_tm)
+                    y_um = m_t / 2 - PP_u(x_um)
+
+                    # Make sure all are arrays
+                    y_tm = np.array(y_tm)
+                    y_um = np.array(y_um)
+
+                    # Now crop to shortest length
+                    min_len = min(len(x_tm), len(x_um), len(y_tm), len(y_um))
+                    x_tm = x_tm[:min_len]
+                    x_um = x_um[:min_len]
+                    y_tm = y_tm[:min_len]
+                    y_um = y_um[:min_len]                    
+
+                    # distance (xu,yu) and (xt,yt)
+                    L_hb = ((x_tm - x_um)**2 + (y_tm - y_um)**2)**0.5 * n_tissue_u
+            
                     L_between = L_u+L_hb
                     for k in range(1,2*n_steps):
                         js = (2*n_steps-1)*(k-1)  # index in result array
