@@ -29,7 +29,7 @@ def OCT_OuterCornea(input_image):
 
     # Adjust data to span data range.
     originaladj = exposure.rescale_intensity(originalgray)       
-    _, BW = cv2.threshold(original_adj, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, BW = cv2.threshold(originaladj, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     BW2 = morphology.remove_small_objects(BW.astype(bool), min_size=5000)
     BW2 = (BW2 * 255).astype(np.uint8) 
 
