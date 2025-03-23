@@ -1,3 +1,4 @@
 .DS_Store
-./code/matlab/*.asv
-
+code/matlab/*.asv
+code/.DS_Store
+code/python/__pycache__/
