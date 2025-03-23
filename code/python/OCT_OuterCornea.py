@@ -98,7 +98,13 @@ def OCT_OuterCornea(input_image):
         y2[ix] = slope * ix + intercept
         pendiente.append(slope)
 
-    mid_seg = np.where(istart >= Columns // 2)[0][0] - 1
+    mid_candidates = np.where(istart >= Columns // 2)[0]
+
+    if mid_candidates.size == 0:
+        mid_seg = 0  # or some fallback value
+    else:
+        mid_seg = mid_candidates[0] - 1
+
     sp = np.sign(pendiente)
     spdiff = np.diff(sp, prepend=0)
     irrglr_seg = [i for i, slope in enumerate(pendiente) if abs(slope) < 0.01 or abs(slope) > 2]
