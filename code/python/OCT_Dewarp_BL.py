@@ -5,8 +5,11 @@ import cv2
 import matplotlib.pyplot as plt
 from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import CubicSpline
-
 from PIL import Image #for resizing and saving image
+from OCT_OuterCornea import OCT_OuterCornea
+from OCT_InnerCornea import OCT_InnerCornea
+from OuterDewarp import OuterDewarp
+from InnerDewarp import InnerDewarp
 
 def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     # this step initializes this whole function. an image "uncorrectedimg" is
