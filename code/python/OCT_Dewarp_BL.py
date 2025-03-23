@@ -71,7 +71,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     im_t = np.zeros((y_dimension, x_dimension, 3), dtype=np.uint8)
 
     # -------------------------------------------------------------------------- Get External Cornea Boundary:
-    originalgrayrsz = cv2.resize(originalgray,(y_dimension,x_dimension))
+    originalgrayrsz = cv2.resize(originalgray,(x_dimension,y_dimension))
 
     # originalgrayrsz is a modified version of originalgray
 
