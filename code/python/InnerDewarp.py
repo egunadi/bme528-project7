@@ -40,7 +40,11 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     phi_sc = np.arcsin(w/2/f)/(n_s/2)
 
     # define all target pixel pairs
-    x_t,y_t = np.meshgrid(np.arange(-n_t/2,n_t/2),np.arange(m_t/2,-1,-m_t/2))
+    x_t, y_t = np.meshgrid(
+        np.arange(-n_t / 2, n_t / 2),
+        np.linspace(m_t / 2, -m_t / 2 + 1, int(m_t))
+    )
+
     #====================================================================
     # first step: remove beam scanning 
     #====================================================================
@@ -83,7 +87,7 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
 
 
     # all point in a line and the coresponding boundary
-    x_tm = x_t[j_start_u,:]
+    x_tm = x_t[int(j_start_u), :]
     B_tm_u = PP_u(np.arange(-100-n_t/2,n_t/2+100))
     B_tm_l = PP_l(np.arange(-100-n_t/2,n_t/2+100))
     B_tm_u = np.maximum(B_tm_u,B_tm_l+1); # if upper boundary goes below lower, take lower values
