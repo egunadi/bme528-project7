@@ -10,6 +10,7 @@ from OCT_OuterCornea import OCT_OuterCornea
 from OCT_InnerCornea import OCT_InnerCornea
 from OuterDewarp import OuterDewarp
 from InnerDewarp import InnerDewarp
+import os
 
 def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     # this step initializes this whole function. an image "uncorrectedimg" is
@@ -226,7 +227,10 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     plt.imshow(dewarpedFull, cmap='gray')
     plt.title("Dewarped Full Image")
     plt.show()
-    output_filepath = "<filepath>"  # Replace with the desired output filepath
+
+    name_only, _ = os.path.splitext(os.path.basename(uncorrectedimg))
+    output_filepath = f"../images/python_dewarped/{name_only}_Dewarped.png"  # Replace with the desired output filepath
+    
     imsave(output_filepath, dewarpedFull)
     # Above is to save dewarpedFull, create filename for output image
 
