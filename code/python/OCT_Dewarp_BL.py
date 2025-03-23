@@ -202,9 +202,24 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
 
     # ---------------------------------------------------------------------------------------------------
     # ---------------------------------------- Save variables in output structure:
-    CorrectedImgStr = {'Somethingwrong':Somethingwrong,'DewarpedImg':dewarpedFull,'DewarpedOuter':dewarpedOut, 'yin': yin, 'yout': yout, 
-        'UncorrectedSz':size(original),'CorrectedSz':size(dewarpedFull), 'Extcornea':Extcornea,'Intcornea':Intcornea, 
-        'PPout':PPout,'PPinn':PPinn, 'x_s1': x_s1, 'y_s1': y_s1, 'x_s2': x_s2, 'y_s2': y_s2, 'OriginalImage': uncorrectedimg} 
+    CorrectedImgStr = {
+        'Somethingwrong': Somethingwrong,
+        'DewarpedImg': dewarpedFull,
+        'DewarpedOuter': dewarpedOut,
+        'yin': yin,
+        'yout': yout,
+        'UncorrectedSz': original.shape,
+        'CorrectedSz': dewarpedFull.shape,
+        'Extcornea': Extcornea,
+        'Intcornea': Intcornea,
+        'PPout': PPout,
+        'PPinn': PPinn,
+        'x_s1': x_s1,
+        'y_s1': y_s1,
+        'x_s2': x_s2,
+        'y_s2': y_s2,
+        'OriginalImage': uncorrectedimg
+    }
 
     # ------------------------------------------ Save image to folder:
     # Displaying image is optional.
