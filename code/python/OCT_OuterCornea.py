@@ -75,14 +75,25 @@ def OCT_OuterCornea(input_image):
     ipt = algo.fit(y.reshape(-1, 1)).predict(pen=10)
 
     K = len(ipt)
-    nseg = K + 1
-    istart = np.array([0] + ipt[:-1])
-    istop = np.array(ipt) - 1
-    istop[-1] = len(y) - 1
+
+    # Create segment start and stop indices safely
+    ipt = np.array(ipt)
+    istart = np.concatenate(([0], ipt[:-1]))
+    istop = np.copy(ipt)
+    istop[-1] = len(y) - 1  # Ensure final segment ends at the last index
+
+    # Defensive guard
+    if len(istart) != len(istop):
+        raise ValueError(f"Segment start/stop mismatch: {len(istart)} != {len(istop)}")
 
     pendiente = []
-    for s in range(nseg):
+    y2 = np.zeros_like(y)
+
+    # Use the actual number of segments, not a separate nseg variable
+    for s in range(len(istart)):
         ix = np.arange(istart[s], istop[s] + 1)
+        if len(ix) < 2:
+            continue  # not enough points to fit a line
         slope, intercept, _, _, _ = linregress(ix, y[ix])
         y2[ix] = slope * ix + intercept
         pendiente.append(slope)
