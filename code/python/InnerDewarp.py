@@ -28,7 +28,7 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     #====================================================================
     # load image and display 
     #====================================================================
-    m_s, n_s = im_s.shape
+    m_s, n_s = im_s.shape[:2]
 
     #====================================================================
     # derived variables
