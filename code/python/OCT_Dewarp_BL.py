@@ -132,6 +132,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     signyout = np.sign(np.concatenate(([-1], np.diff(yout))))
 
     if np.any(signyout[:minpyout] != -1) or np.any(signyout[minpyout + 1 :] != 1):
+        print('Something is wrong with fitting a 4th degree curve to the external cornea border')
         Somethingwrong = 1
     
 
@@ -155,12 +156,14 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     minpyin = np.argmin(yin)
     signyin = np.sign(np.concatenate(([-1], np.diff(yin))))
     if np.any(signyin[:minpyin] != -1) or np.any(signyin[minpyin + 1 :] != 1):
+        print('Something is wrong with fitting a 4th degree curve to the internal cornea border')
         Somethingwrong = 1
     
 
 
     # ------------- If there is anything wrong with the border detection, it will flag the variable "Somethingwrong":
     if np.any((yin - yout)<=0):
+        print('Something is wrong with the border detection')
         Somethingwrong=1
     
 
@@ -187,6 +190,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
 
     # ---------------------- Do a final check if there is anything wrong with the 2nd degree curve fittings:
     if any((yin - yout)<=0):
+        print('Something is wrong with the 2nd degree curve fittings')
         Somethingwrong=1
     
 
