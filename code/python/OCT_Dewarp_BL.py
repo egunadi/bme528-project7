@@ -119,7 +119,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     PPout = CubicSpline(x - n_t/2, m_t/2 - y)
     #PPout is a piecewise polynomial 
     # spline is to create points for where there are no points
-    yout = (m_t/2) - PPout, (xq - n_t/2)
+    yout = (m_t/2) - PPout(xq - n_t/2)
     # yout is a variable that holds an amount equivalent to the difference
     # between m_t/2 and the evaluated piecewise polynomial
     # ppval is a built in matlab function that evaluates the piecewise
