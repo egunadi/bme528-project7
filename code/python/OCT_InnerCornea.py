@@ -7,6 +7,7 @@ from numpy.polynomial.polynomial import Polynomial
 from scipy.interpolate import CubicSpline
 from scipy.signal import find_peaks
 import scipy.ndimage as ndi
+from math import floor
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------TO DETECT THE INNER CORNEA AND LEFT AND RIGHT ENDPOINTS:-------------------------------------------------------
