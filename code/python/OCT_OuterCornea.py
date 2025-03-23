@@ -20,7 +20,11 @@ from ruptures.costs import CostLinear
 
 def OCT_OuterCornea(input_image):
 
-    originalgray = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+    if len(input_image.shape) == 3:  # Check if the image is colored (3 channels)
+        originalgray = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+    else:
+        originalgray = input_image.copy()  # If already grayscale, just copy it
+
     Rows, Columns = originalgray.shape
 
     # Adjust data to span data range.
