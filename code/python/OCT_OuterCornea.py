@@ -72,7 +72,7 @@ def OCT_OuterCornea(input_image):
     y = -y_outter_Cornea_smt + np.max(y_outter_Cornea_smt)
     y2 = np.zeros_like(y)
     algo = Pelt(model='linear', min_size=2, jump=1)
-    ipt = algo.fit(y).predict(pen=10)
+    ipt = algo.fit(y.reshape(-1, 1)).predict(pen=10)
 
     K = len(ipt)
     nseg = K + 1
