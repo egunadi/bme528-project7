@@ -12,7 +12,6 @@ from scipy.signal import find_peaks, savgol_filter
 from scipy.stats import linregress
 import scipy.ndimage as ndi
 from ruptures import Pelt
-from ruptures.costs import CostLinear
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------BASIC IMAGE PROCESSING TO DETECT OUTTER CORNEA BOUNDARY:-----------------------------------------------------
@@ -72,7 +71,7 @@ def OCT_OuterCornea(input_image):
     y_outter_Cornea_smt = savgol_filter(y_outter_Cornea, window_length=5, polyorder=2)
     y = -y_outter_Cornea_smt + np.max(y_outter_Cornea_smt)
     y2 = np.zeros_like(y)
-    algo = Pelt(model=CostLinear(), min_size=2, jump=1)
+    algo = Pelt(model='linear', min_size=2, jump=1)
     ipt = algo.fit(y).predict(pen=10)
 
     K = len(ipt)
