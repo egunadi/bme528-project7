@@ -192,21 +192,32 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
                         # to select between different cases
                         fia = (i == n_steps)*(k == n_steps) # factor is above
                         fib = (k == n_steps)                # factor is between
+
+                        L_above, L_between, L_below, is_above, is_between, is_below = align_arrays(
+                            L_above, L_between, L_below, is_above, is_between, is_below)
+
                         # fill array, with penalties for wrong position
-                        L_m [js+i,:] = (
-                            is_above * (fia*L_above   + (1-fia)*5*f_t) +
-                            is_between * (fib*L_between + (1-fib)*5*f_t) +
-                            is_below * L_below
-                        )
+                        length = min(L_m.shape[1], L_above.shape[0])  # or any of the aligned arrays
+                        row_idx = js + i
+                        if row_idx < L_m.shape[0]:
+                            L_m[row_idx, :length] = (
+                                is_above[:length] * (fia * L_above[:length] + (1 - fia) * 5 * f_t) +
+                                is_between[:length] * (fib * L_between[:length] + (1 - fib) * 5 * f_t) +
+                                is_below[:length] * L_below[:length]
+                            )
+
                 # retrive shortest pathway
                 L = np.min(L_m,axis=0)
-                index = np.argmin(L_m,axis=0)
+                index = np.argmin(L_m[:, j])  # <-- single column now
+
                 # calc shifts for shortest pathway
-                shift_u = np.mod(index-1,(2*n_steps-1))-n_steps+1
-                shift_l = np.floor((index-1)/(2*n_steps-1))-n_steps+1
+                shift_u = int(np.floor((index - 1) / (2 * n_steps - 1)) - n_steps + 1)
+                shift_l = int(np.floor((index - 1) % (2 * n_steps - 1)) - n_steps + 1)
+
                 # and change point of hit 
-                xu = xu+shift_u*step_size
-                xl = xl+shift_l*step_size
+                xu = xu + shift_u * step_size
+                xl = xl + shift_l * step_size
+
             # calc corresponding (xs,ys);
         #    yu = ppval(PP_u,xu).*(1-is_above)+(m_t/2-j)*is_above;
         interp_func = interp1d(B_u_steps, B_u_LUT, kind='linear', fill_value="extrapolate")
