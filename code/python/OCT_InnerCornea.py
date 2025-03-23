@@ -4,10 +4,8 @@ from scipy.ndimage import binary_fill_holes
 
 def trace_from_seed(mask, seed_point, direction):
     if direction == 'left':
-        # Flip mask horizontally for tracing left
         flipped_mask = cv2.flip(mask, 1)
         flipped_seed = (seed_point[0], mask.shape[1] - seed_point[1] - 1)
-
         contours, _ = cv2.findContours(flipped_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     else:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -67,8 +65,13 @@ def OCT_InnerCornea(ExtCorneaStruct):
     mask[endcornea+10:, mid_col-10:mid_col+10] = 0
 
     left_bound, right_bound = int(x_outer[0]), int(x_outer[-1])
-    mask[:, :left_bound] = 0
-    mask[:, right_bound+1:] = 0
+
+    # Additional mask to block outer cornea wings:
+    right_wing_margin = 275  # Adjust margin as needed
+    left_wing_margin = 200  # Adjust margin as needed
+    mask[:, :left_bound + left_wing_margin] = 0
+    mask[:, right_bound - right_wing_margin:] = 0
+
     mask = binary_fill_holes(mask).astype(np.uint8) * 255
 
     # Slightly shift seeds away from pillar
