@@ -47,10 +47,11 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     im_b = im_t[:,:,0]
 
     # initialize all hitpoints (xu,yu) on the boundary
-    xu = np.arange(-n_t/2,n_t/2-1)
-
+    xu = np.arange(-n_t/2, n_t/2)
+ 
     # start new calculation, where the boundary begins //// This is equivalent to my 'topcornea' variable:
-    j_start = max(1,int(np.floor(m_t/2-PPout(xu)))) #may need to change based on spline complexity and input formating
+    j_start = max(1, int(np.floor(np.min(m_t/2 - PPout(xu)))))
+
     # delete, to enable progressive display
     #im_t (j_start:m_t,:,1:2) = 0;
 
