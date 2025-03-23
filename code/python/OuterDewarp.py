@@ -29,7 +29,10 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     phi_sc = np.arcsin(w/2/f)/(n_s/2)
 
     # define all target pixel pairs
-    x_t,y_t = np.meshgrid(np.arange(-n_t/2,n_t/2),np.arange(m_t/2,-1,-m_t/2))
+    x_t, y_t = np.meshgrid(
+        np.arange(-n_t/2, n_t/2),
+        np.arange(m_t//2, -1, -1)  # Use integer division and pixel-wise steps
+    )
 
     #====================================================================
     # first step: remove beam scanning
@@ -63,8 +66,8 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     steps = np.logspace(step_size_max,step_size_min,n_step_size)
 
     # reserve space for pathlength array
-    L_u = np.zeros(2*n_steps-1,n_t)
-    L_l = np.zeros(2*n_steps-1,n_t)
+    L_u = np.zeros((2*n_steps-1,n_t))
+    L_l = np.zeros((2*n_steps-1,n_t))
 
     # all point in a line and the coresponding boundary
     x_tm = x_t[j_start,:]
