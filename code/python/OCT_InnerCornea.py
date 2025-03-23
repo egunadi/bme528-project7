@@ -25,9 +25,6 @@ def OCT_InnerCornea(ExtCorneaStruct):
     originalgray = ExtCorneaStruct['originalgray']
     topcornea = ExtCorneaStruct['topcornea']
 
-    y_inner_Cornea = np.zeros()
-    x_inner_Cornea = np.zeros()
-
     originaladj = exposure.adjust_gamma(originalgray, gamma=1)       
     BW2 = originaladj > filters.threshold_otsu(originaladj)
     BW2[:topcornea-1,:] = 0
