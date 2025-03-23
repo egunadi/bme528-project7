@@ -16,6 +16,16 @@ import time
 # ================================== This function is utilized to further Dewarp the image 
 # ================================== from the "OuterDewarp" function
 
+def align_arrays(*arrays):
+    """
+    Trims all input 1D arrays to the length of the shortest one.
+    
+    Returns:
+        A tuple of truncated arrays.
+    """
+    min_len = min(len(arr) for arr in arrays)
+    return tuple(arr[:min_len] for arr in arrays)
+
 def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowColors):
 
     #subplot (axes);
@@ -155,22 +165,28 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
                     y_um = np.array(y_um)
 
                     # Now crop to shortest length
-                    min_len = min(len(x_tm), len(x_um), len(y_tm), len(y_um))
-                    x_tm = x_tm[:min_len]
-                    x_um = x_um[:min_len]
-                    y_tm = y_tm[:min_len]
-                    y_um = y_um[:min_len]                    
+                    x_tm, x_um, y_tm, y_um = align_arrays(x_tm, x_um, y_tm, y_um)  # Ensure all are same length                  
 
                     # distance (xu,yu) and (xt,yt)
                     L_hb = ((x_tm - x_um)**2 + (y_tm - y_um)**2)**0.5 * n_tissue_u
             
+                    min_len = min(len(L_u), len(L_hb))
+                    L_u = L_u[:min_len]
+                    L_hb = L_hb[:min_len]
+
                     L_between = L_u+L_hb
                     for k in range(1,2*n_steps):
                         js = (2*n_steps-1)*(k-1)  # index in result array
                         # vary cross position on lower boundary
                         x_lm = xl+(k-n_steps)*step_size
                         y_lm = PP_l(x_lm)
+
+                        x_lm, y_lm, x_um, y_um = align_arrays(x_lm, y_lm, x_um, y_um)  # Ensure all are same length
+
                         L_b = ((x_lm-x_um)**2+(y_lm-y_um)**2)**0.5 * n_tissue_u  # distance (xu,yu) and (xl,yl)
+
+                        x_tm, y_tm, x_lm, y_lm = align_arrays(x_tm, y_tm, x_lm, y_lm)  # Ensure all are same length
+
                         L_l = ((x_tm-x_lm)**2+(y_tm-y_lm)**2)**0.5 * n_tissue_l  # distance (xl,yl) and (xt,yt)
                         L_below = L_u+L_b+L_l
                         # to select between different cases
