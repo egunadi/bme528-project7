@@ -178,8 +178,8 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
 
     x=x_inner_Cornea[::50]
     y=y_inner_Cornea[::50]
-    P = polyfit(x, y,2)
-    y = polyval(P, xq)
+    P = np.polyfit(x, y,2)
+    y = np.polyval(P, xq)
     y=y[np.searchsorted(xq,x)]
     PPinn = CubicSpline(x-n_t/2,m_t/2-y)
     yin = (m_t/2)-PPinn((xq)-n_t/2)
