@@ -1,5 +1,5 @@
 import numpy as np
-from skimage import exposure, measure, morphology
+from skimage import exposure, measure, morphology, filters
 from skimage.io import imread, imshow, imsave
 import cv2
 import matplotlib.pyplot as plt
@@ -37,7 +37,7 @@ def OCT_InnerCornea(ExtCorneaStruct):
     copiaBW[:, :x_outter_Cornea[0]-1] = 0
     copiaBW[:, x_outter_Cornea[-1]+1:] = 0
     copiaBW[endcornea+10:Rows, Columns//2-10:Columns//2+10] = 0
-    copiaBW = fill_holes(copiaBW)
+    copiaBW = ndi.binary_fill_holes(copiaBW).astype(np.uint8)
     se = disk(2)
     col_slice = copiaBW[:, Columns//2]
     endcornea_position = np.min(np.where(col_slice == 1))
