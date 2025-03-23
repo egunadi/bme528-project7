@@ -84,6 +84,11 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
     # little variation, searches in the neighborhood with decreasing step sizes
     #====================================================================
     bottom_reached = 0  # for faster end
+
+    if j_start >= m_t:
+        print(f"Warning: j_start={j_start} is >= m_t={m_t}, skipping dewarping")
+        return im_t, x_s, y_s  # Or however you want to gracefully exit
+
     for j in range(j_start,m_t+1):
 
         if not bottom_reached:
@@ -131,12 +136,15 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
                 step_size_min = np.log10(0.1)
                 n_step_size = 2
                 steps = np.logspace(step_size_max,step_size_min,n_step_size)
-                L_u = np.zeros(2*n_steps-1,n_t)
-                L_l = np.zeros(2*n_steps-1,n_t)
+                L_u = np.zeros((2*n_steps-1,n_t))
+                L_l = np.zeros((2*n_steps-1,n_t))
         
         # save in big array
-        x_s[j,:] = xs
-        y_s[j,:] = ys
+        if j < x_s.shape[0]:
+            x_s[j, :] = xs
+            y_s[j, :] = ys
+        else:
+            print(f"Skipping j={j}, out of bounds for x_s with shape {x_s.shape}")
 
     #====================================================================
     # biliear interpolation on the original image
