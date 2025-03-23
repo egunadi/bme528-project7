@@ -112,7 +112,9 @@ def InnerDewarp (im_s,im_t,f,w,d,n_tissue_u,n_tissue_l,n_t,m_t,PP_u,PP_l,ShowCol
     # little variation, searches in the neighborhood with decreasing step sizes
     #====================================================================
     bottom_reached = 0  # for faster end
-    for j in range(j_start_u,m_t+1):
+
+    start = max(0, min(int(j_start_u), m_t - 1))
+    for j in range(start, m_t + 1):
 
         if not bottom_reached:
             tic = time.time()
