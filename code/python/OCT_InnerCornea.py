@@ -1,88 +1,101 @@
 import numpy as np
-from skimage import exposure, measure, morphology, filters
-from skimage.io import imread, imshow, imsave
 import cv2
-import matplotlib.pyplot as plt
-from numpy.polynomial.polynomial import Polynomial
-from scipy.interpolate import CubicSpline
-from scipy.signal import find_peaks
-import scipy.ndimage as ndi
-from math import floor
+from scipy.ndimage import binary_fill_holes
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------TO DETECT THE INNER CORNEA AND LEFT AND RIGHT ENDPOINTS:-------------------------------------------------------
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# ------ This function receives as input "ExtCorneaStruct" which is the output from "OCT_OuterCornea" function
+def trace_from_seed(mask, seed_point, direction):
+    if direction == 'left':
+        # Flip mask horizontally for tracing left
+        flipped_mask = cv2.flip(mask, 1)
+        flipped_seed = (seed_point[0], mask.shape[1] - seed_point[1] - 1)
+
+        contours, _ = cv2.findContours(flipped_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    else:
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    if not contours:
+        return [], []
+
+    def dist_to_seed(contour, seed):
+        pts = contour[:, 0, :]
+        return np.min(np.sqrt((pts[:, 1] - seed[0])**2 + (pts[:, 0] - seed[1])**2))
+
+    best_contour = min(contours, key=lambda c: dist_to_seed(c, flipped_seed if direction=='left' else seed_point))
+    rows, cols = best_contour[:, 0, 1], best_contour[:, 0, 0]
+
+    dists = np.sqrt((rows - (flipped_seed[0] if direction=='left' else seed_point[0]))**2 +
+                    (cols - (flipped_seed[1] if direction=='left' else seed_point[1]))**2)
+    start_idx = np.argmin(dists)
+    rows, cols = np.roll(rows, -start_idx), np.roll(cols, -start_idx)
+
+    rows_final, cols_final = [rows[0]], [cols[0]]
+
+    for r, c in zip(rows[1:], cols[1:]):
+        vertical_change = r - rows_final[-1]
+        horizontal_change = c - cols_final[-1]
+
+        if abs(vertical_change) > 10:
+            continue
+
+        if direction == 'left' and horizontal_change > 0:
+            rows_final.append(r)
+            cols_final.append(c)
+        elif direction == 'right' and horizontal_change > 0:
+            rows_final.append(r)
+            cols_final.append(c)
+
+        if horizontal_change == 0:
+            continue
+
+    if direction == 'left':
+        cols_final = [mask.shape[1] - c - 1 for c in cols_final]
+
+    return cols_final, rows_final
 
 def OCT_InnerCornea(ExtCorneaStruct):
-
-    y_outter_Cornea = ExtCorneaStruct['ycornea']
-    x_outter_Cornea = ExtCorneaStruct['xcornea']
+    y_outer = ExtCorneaStruct['ycornea']
+    x_outer = ExtCorneaStruct['xcornea']
     BWimage = ExtCorneaStruct['BW']
     Rows = ExtCorneaStruct['rows']
     Columns = ExtCorneaStruct['columns']
     endcornea = ExtCorneaStruct['endcornea']
     toplens = ExtCorneaStruct['toplens']
-    originalgray = ExtCorneaStruct['originalgray']
     topcornea = ExtCorneaStruct['topcornea']
 
-    originaladj = exposure.adjust_gamma(originalgray, gamma=1)       
-    BW2 = originaladj > filters.threshold_otsu(originaladj)
-    BW2[:topcornea-1,:] = 0
-    if toplens is not None:
-        BW2[endcornea+1:toplens-1,Columns//2-50:Columns//2+50] = 0
-    else:
-        BW2[endcornea+1:Rows,Columns//2-50:Columns//2+50] = 0
+    mask = BWimage.copy()
+    mask[:topcornea, :] = 0
+    mid_col = Columns // 2
+    mask[endcornea+10:, mid_col-10:mid_col+10] = 0
 
-    copiaBW=np.copy(BW2)
-    copiaBW[:, :x_outter_Cornea[0]-1] = 0
-    copiaBW[:, x_outter_Cornea[-1]+1:] = 0
-    copiaBW[endcornea+10:Rows, Columns//2-10:Columns//2+10] = 0
-    copiaBW = ndi.binary_fill_holes(copiaBW).astype(np.uint8)
-    col_slice = copiaBW[:, Columns//2]
-    endcornea_position = np.min(np.where(col_slice == 1))
+    left_bound, right_bound = int(x_outer[0]), int(x_outer[-1])
+    mask[:, :left_bound] = 0
+    mask[:, right_bound+1:] = 0
+    mask = binary_fill_holes(mask).astype(np.uint8) * 255
 
-    # --------------------------------------------------- utilizing the other BWTRACEBOUNDARY method instead to avoid false limit detections:
-    # --------------------------- Left side:
-    inerC_L = measure.find_contours(copiaBW, 0)[0]
-    inerC_L = inerC_L[inerC_L[:, 1] > floor(Columns / 2)]
-    s = ndi.uniform_filter1d(inerC_L[:, 1], size=5)
-    
-    localmin, _ = find_peaks(-s, distance=600, prominence=50)
-    if localmin.size > 0:
-        minpos = localmin[0]
-        inerC_L = inerC_L[:minpos, :]
-    
-    x_inner_Cornea = np.flip(inerC_L[:, 1])
-    y_inner_Cornea = np.flip(inerC_L[:, 0])
-    x_inner_Cornea, it = np.unique(x_inner_Cornea, return_index=True)
-    y_inner_Cornea = y_inner_Cornea[it]
+    # Slightly shift seeds away from pillar
+    seed_left = (endcornea + 5, mid_col - 30)
+    seed_right = (endcornea + 5, mid_col + 30)
 
-    ydiff = np.where(np.abs(np.diff(y_inner_Cornea)) >= 30)[0]
-    if ydiff.size > 0 and np.any(x_inner_Cornea[ydiff] < (Columns / 2) - 200):
-        ydiff = np.max(ydiff[x_inner_Cornea[ydiff] < (Columns / 2) - 200]) + 1
-        x_inner_Cornea = x_inner_Cornea[ydiff:]
-        y_inner_Cornea = y_inner_Cornea[ydiff:]
-    # --------------------------- Right side:
-    inerC_R = measure.find_contours(copiaBW, 0)[1]
-    inerC_R = inerC_R[inerC_R[:, 1] < floor(Columns / 2)]
-    s = ndi.uniform_filter1d(inerC_R[:, 1], size=5)
-    localmax, _ = find_peaks(s, distance=600, prominence=50)
-    if localmax.size > 0:
-        maxpos = localmax[0]
-        inerC_R = inerC_R[:maxpos, :]
-    x_inner_Cornea = np.concatenate([x_inner_Cornea, inerC_R[:, 1]])
-    y_inner_Cornea = np.concatenate([y_inner_Cornea, inerC_R[:, 0]])
+    # Trace separately
+    x_left, y_left = trace_from_seed(mask, seed_left, 'left')
+    x_right, y_right = trace_from_seed(mask, seed_right, 'right')
 
-    x_inner_Cornea, it = np.unique(x_inner_Cornea, return_index=True)
-    y_inner_Cornea = y_inner_Cornea[it]
-    
-    ydiff = np.where(np.abs(np.diff(y_inner_Cornea)) >= 30)[0]
-    if ydiff.size > 0 and np.any(x_inner_Cornea[ydiff] > (Columns / 2) + 200):
-        ydiff = np.min(ydiff[x_inner_Cornea[ydiff] > (Columns / 2) + 200])
-        x_inner_Cornea = x_inner_Cornea[:ydiff]
-        y_inner_Cornea = y_inner_Cornea[:ydiff]
+    # Combine results
+    x_combined = np.concatenate((x_left[::-1], x_right))
+    y_combined = np.concatenate((y_left[::-1], y_right))
 
-    IntCorneaStruct = {'ycornea': y_inner_Cornea, 'xcornea': x_inner_Cornea, 'endcornea': endcornea}
+    if len(x_combined) < 2:
+        print("Not enough inner points found, reverting to outer cornea.")
+        return {'ycornea': y_outer, 'xcornea': x_outer, 'endcornea': endcornea}
+
+    # Remove duplicate x values
+    x_unique, idx = np.unique(x_combined, return_index=True)
+    x_inner_Cornea = x_unique
+    y_inner_Cornea = y_combined[idx]
+
+    IntCorneaStruct = {
+        'ycornea': y_inner_Cornea,
+        'xcornea': x_inner_Cornea,
+        'endcornea': endcornea
+    }
 
     return IntCorneaStruct

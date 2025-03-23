@@ -168,25 +168,37 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     
 
     # ---------------------------------------- Final 2nd degree curve fitting of outer and inner cornea in PP struct format for Refraction Section:
-    x=x_outer_Cornea[::50]
-    y=y_outer_Cornea[::50]
-    P = np.polyfit(x, y,2)
-    y = np.polyval(P, xq)
+    # --- Process Outer Cornea Boundary for Spline Fitting ---
+    # Sample every 50th point
+    x_outer_sample = x_outer_Cornea[::50]
+    y_outer_sample = y_outer_Cornea[::50]
 
-    idx = np.searchsorted(xq, x)
-    idx = np.clip(idx, 0, len(y) - 1)
-    y = y[idx]
+    # Sort the (x, y) pairs by x and remove duplicates
+    xy_outer_sorted = sorted(zip(x_outer_sample, y_outer_sample), key=lambda t: t[0])
+    x_outer_sorted, y_outer_sorted = np.array(xy_outer_sorted).T
+    x_outer_unique, unique_idx = np.unique(x_outer_sorted, return_index=True)
+    y_outer_unique = y_outer_sorted[unique_idx]
 
-    PPout = CubicSpline(x-n_t/2,m_t/2-y)
-    yout = (m_t/2)-PPout((xq)-n_t/2)
+    # Fit a 2nd-degree polynomial to the unique outer boundary points
+    P_outer = np.polyfit(x_outer_unique, y_outer_unique, 2)
+    # (Optional) Evaluate the polynomial at the query points xq if needed:
+    # y_poly_outer = np.polyval(P_outer, xq)
+    # Here we build the spline using the unique points.
+    PPout = CubicSpline(x_outer_unique - n_t/2, m_t/2 - np.polyval(P_outer, x_outer_unique))
+    yout = (m_t/2) - PPout(xq - n_t/2)
 
-    x=x_inner_Cornea[::50]
-    y=y_inner_Cornea[::50]
-    P = np.polyfit(x, y,2)
-    y = np.polyval(P, xq)
-    y=y[np.searchsorted(xq,x)]
-    PPinn = CubicSpline(x-n_t/2,m_t/2-y)
-    yin = (m_t/2)-PPinn((xq)-n_t/2)
+    # --- Process Inner Cornea Boundary for Spline Fitting ---
+    x_inner_sample = x_inner_Cornea[::50]
+    y_inner_sample = y_inner_Cornea[::50]
+
+    xy_inner_sorted = sorted(zip(x_inner_sample, y_inner_sample), key=lambda t: t[0])
+    x_inner_sorted, y_inner_sorted = np.array(xy_inner_sorted).T
+    x_inner_unique, unique_idx = np.unique(x_inner_sorted, return_index=True)
+    y_inner_unique = y_inner_sorted[unique_idx]
+
+    P_inner = np.polyfit(x_inner_unique, y_inner_unique, 2)
+    PPinn = CubicSpline(x_inner_unique - n_t/2, m_t/2 - np.polyval(P_inner, x_inner_unique))
+    yin = (m_t/2) - PPinn(xq - n_t/2)
 
     # ---------------------- Do a final check if there is anything wrong with the 2nd degree curve fittings:
     if any((yin - yout)<=0):
