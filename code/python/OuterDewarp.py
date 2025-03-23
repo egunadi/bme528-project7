@@ -7,12 +7,11 @@
 import numpy as np
 from skimage import exposure
 from skimage.io import imread, imshow
-
 from PIL import Image #for resizing and saving image
-
 from scipy import ndimage
 from scipy.interpolate import PPoly, interp2d
 import time
+from scipy.interpolate import RegularGridInterpolator
 
 # ================================== This function is utilized to Dewarp the original image
 
@@ -155,8 +154,23 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
             interp_func = interp2d(x_s + n_s/2, m_s/2 - y_s, np.double(im_s[:, :, i]), kind='linear')
             im_t [:,:,i] = interp_func(x_s+n_s/2,m_s/2-y_s)
     else:
-        interp_func = interp2d(x_s + n_s/2, m_s/2 - y_s, np.double(im_s[:, :, 0]), kind='linear')
-        im_t [:,:,1] = interp_func(x_s+n_s/2,m_s/2-y_s)        
+        # Define image grid (rows = y, cols = x)
+        input_y = np.arange(im_s.shape[0])  # height (rows)
+        input_x = np.arange(im_s.shape[1])  # width (cols)
+
+        # Use green channel, consistent with MATLAB's behavior
+        channel_1 = np.double(im_s[:, :, 1])  # MATLAB uses the 2nd channel by default
+
+        # Create the interpolator
+        interp_func = RegularGridInterpolator((input_y, input_x), channel_1, bounds_error=False, fill_value=0)
+
+        # Prepare interpolation points: shape (N, 2)
+        coords = np.stack([(m_s/2 - y_s).flatten(), (x_s + n_s/2).flatten()], axis=-1)
+
+        # Interpolate and reshape
+        interpolated = interp_func(coords).reshape(y_s.shape)
+        im_t[j_start:j_start + interpolated.shape[0], :, 1] = np.clip(interpolated, 0, 255).astype(np.uint8)
+
         # =========== potential replacement ===
 
     im_t[:,:,0] = im_t[:,:,1]
