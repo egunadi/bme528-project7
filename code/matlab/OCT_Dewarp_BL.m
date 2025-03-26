@@ -109,6 +109,7 @@ yout = (m_t/2) - ppval(PPout, ((xq) - n_t/2));
 signyout = sign([-1 diff(yout)]);
 
 if any(signyout(1:minpyout)~=-1) | any(signyout(minpyout+1:end)~=1)
+    disp('Something is wrong with fitting a 4th degree curve to the external cornea border');
     Somethingwrong=1;
 end
 
@@ -127,12 +128,14 @@ yin = (m_t/2)-ppval(PPinn,((xq)-n_t/2));
 [minvyin minpyin]=min(yin);
 signyin = sign([-1 diff(yin)]);
 if any(signyin(1:minpyin)~=-1) | any(signyin(minpyin+1:end)~=1)
+    disp('Something is wrong with fitting a 4th degree curve to the internal cornea border');
     Somethingwrong=1;
 end
 
 
 % ------------- If there is anything wrong with the border detection, it will flag the variable "Somethingwrong":
 if any((yin - yout)<=0)
+    disp('Something is wrong with the border detection');
     Somethingwrong=1;
 end
 
@@ -155,6 +158,7 @@ yin = (m_t/2)-ppval(PPinn,((xq)-n_t/2));
 
 % ---------------------- Do a final check if there is anything wrong with the 2nd degree curve fittings:
 if any((yin - yout)<=0)
+    disp('Something is wrong with the 2nd degree curve fittings');
     Somethingwrong=1;
 end
 
