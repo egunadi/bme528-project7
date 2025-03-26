@@ -50,7 +50,7 @@ def trace_from_seed(mask, seed_point, direction):
 
     return cols_final, rows_final
 
-def dynamically_trim_wings(x, y, poly_degree=3, curvature_threshold=0.4):
+def dynamically_trim_wings(x, y, poly_degree=3, curvature_threshold=0.01):
     # Fit polynomial
     poly = np.polyfit(x, y, poly_degree)
     y_fit = np.polyval(poly, x)
