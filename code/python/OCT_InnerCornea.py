@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from scipy.ndimage import binary_fill_holes
+from scipy.signal import savgol_filter
 
 def trace_from_seed(mask, seed_point, direction):
     if direction == 'left':
@@ -17,11 +18,11 @@ def trace_from_seed(mask, seed_point, direction):
         pts = contour[:, 0, :]
         return np.min(np.sqrt((pts[:, 1] - seed[0])**2 + (pts[:, 0] - seed[1])**2))
 
-    best_contour = min(contours, key=lambda c: dist_to_seed(c, flipped_seed if direction=='left' else seed_point))
+    best_contour = min(contours, key=lambda c: dist_to_seed(c, flipped_seed if direction == 'left' else seed_point))
     rows, cols = best_contour[:, 0, 1], best_contour[:, 0, 0]
 
-    dists = np.sqrt((rows - (flipped_seed[0] if direction=='left' else seed_point[0]))**2 +
-                    (cols - (flipped_seed[1] if direction=='left' else seed_point[1]))**2)
+    dists = np.sqrt((rows - (flipped_seed[0] if direction == 'left' else seed_point[0]))**2 +
+                    (cols - (flipped_seed[1] if direction == 'left' else seed_point[1]))**2)
     start_idx = np.argmin(dists)
     rows, cols = np.roll(rows, -start_idx), np.roll(cols, -start_idx)
 
@@ -49,6 +50,29 @@ def trace_from_seed(mask, seed_point, direction):
 
     return cols_final, rows_final
 
+def dynamically_trim_wings(x, y, poly_degree=3, curvature_threshold=0.4):
+    # Fit polynomial
+    poly = np.polyfit(x, y, poly_degree)
+    y_fit = np.polyval(poly, x)
+
+    # Smooth to calculate curvature
+    y_smooth = savgol_filter(y_fit, window_length=51, polyorder=3)
+
+    # Compute second derivative (curvature)
+    curvature = np.gradient(np.gradient(y_smooth))
+
+    # Identify central smooth region by curvature
+    central_region = np.abs(curvature) < curvature_threshold
+    indices = np.where(central_region)[0]
+
+    if len(indices) < 2:
+        return x, y  # Return original if too restrictive
+
+    # Trim x and y based on central_region
+    start, end = indices[0], indices[-1]
+
+    return x[start:end+1], y[start:end+1]
+
 def OCT_InnerCornea(ExtCorneaStruct):
     y_outer = ExtCorneaStruct['ycornea']
     x_outer = ExtCorneaStruct['xcornea']
@@ -63,14 +87,6 @@ def OCT_InnerCornea(ExtCorneaStruct):
     mask[:topcornea, :] = 0
     mid_col = Columns // 2
     mask[endcornea+10:, mid_col-10:mid_col+10] = 0
-
-    left_bound, right_bound = int(x_outer[0]), int(x_outer[-1])
-
-    # Additional mask to block outer cornea wings:
-    right_wing_margin = 275  # Adjust margin as needed
-    left_wing_margin = 200  # Adjust margin as needed
-    mask[:, :left_bound + left_wing_margin] = 0
-    mask[:, right_bound - right_wing_margin:] = 0
 
     mask = binary_fill_holes(mask).astype(np.uint8) * 255
 
@@ -95,9 +111,12 @@ def OCT_InnerCornea(ExtCorneaStruct):
     x_inner_Cornea = x_unique
     y_inner_Cornea = y_combined[idx]
 
+    # Dynamically trim wings
+    x_trimmed, y_trimmed = dynamically_trim_wings(x_inner_Cornea, y_inner_Cornea)
+
     IntCorneaStruct = {
-        'ycornea': y_inner_Cornea,
-        'xcornea': x_inner_Cornea,
+        'ycornea': y_trimmed,
+        'xcornea': x_trimmed,
         'endcornea': endcornea
     }
 
