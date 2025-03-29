@@ -141,8 +141,8 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     # something went wrong
 
     # -------- Fitting a 4th degree curve to internal cornea border and look for any abnormalities:
-    x = x_outer_Cornea[::50]
-    y = y_outer_Cornea[::50]
+    x = x_inner_Cornea[::50]
+    y = y_inner_Cornea[::50]
     P = np.polyfit(x,y,4)
     y = np.polyval(P, xq)
 
