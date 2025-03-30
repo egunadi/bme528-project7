@@ -29,8 +29,8 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
 
     # define all target pixel pairs
     x_t, y_t = np.meshgrid(
-        np.arange(-n_t/2, n_t/2),
-        np.arange(m_t//2, -1, -1)  # Use integer division and pixel-wise steps
+        np.arange(-n_t // 2, n_t // 2),    # ensures proper length = n_t
+        np.arange(m_t // 2, -m_t // 2, -1) # ensures proper length = m_t
     )
 
     #====================================================================
@@ -88,7 +88,7 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
         print(f"Warning: j_start={j_start} is >= m_t={m_t}, skipping dewarping")
         return im_t, x_s, y_s  # Or however you want to gracefully exit
 
-    for j in range(j_start,m_t+1):
+    for j in range(j_start, m_t):
 
         if not bottom_reached:
             y_tm = m_t/2-j
@@ -138,12 +138,8 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
                 L_u = np.zeros((2*n_steps-1,n_t))
                 L_l = np.zeros((2*n_steps-1,n_t))
         
-        # save in big array
-        if j < x_s.shape[0]:
-            x_s[j, :] = xs
-            y_s[j, :] = ys
-        else:
-            print(f"Skipping j={j}, out of bounds for x_s with shape {x_s.shape}")
+        x_s[j, :] = xs
+        y_s[j, :] = ys
 
     #====================================================================
     # biliear interpolation on the original image
@@ -169,7 +165,9 @@ def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
 
         # Interpolate and reshape
         interpolated = interp_func(coords).reshape(y_s.shape)
-        im_t[j_start:j_start + interpolated.shape[0], :, 1] = np.clip(interpolated, 0, 255).astype(np.uint8)
+        end_row = min(j_start + interpolated.shape[0], m_t)
+        rows_to_write = end_row - j_start
+        im_t[j_start:end_row, :, 1] = np.clip(interpolated[:rows_to_write, :], 0, 255).astype(np.uint8)
 
         # =========== potential replacement ===
 
