@@ -215,7 +215,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
 
 
     # -------------- Call function "InnerDewarp" to dewarp "dewarpedOut" image (when light passes through inner cornea interface):
-    dewarpedFull,x_s2,y_s2 = InnerDewarp(im_s, dewarpedOut, D, w, d, n_tissue1, n_tissue2, x_dimension, y_dimension, PPout, PPinn, ShowColors)
+    dewarpedFull,x_s2,y_s2 = InnerDewarp(im_s, dewarpedOut.copy(), D, w, d, n_tissue1, n_tissue2, x_dimension, y_dimension, PPout, PPinn, ShowColors)
 
     # ---------------------------------------------------------------------------------------------------
     # ---------------------------------------- Save variables in output structure:
