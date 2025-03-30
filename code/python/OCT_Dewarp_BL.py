@@ -210,7 +210,7 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
     # original image in original size
     im_s = original # this is the uint8 image
     # -------------- Call function "OuterDewarp" to dewarp original image when light passes through outer cornea interface:
-    dewarpedOut,x_s1,y_s1 = OuterDewarp(im_s, im_t, D, w, d, n_tissue1, x_dimension, y_dimension, PPout, ShowColors)
+    dewarpedOut,x_s1,y_s1 = OuterDewarp(im_s, im_t.copy(), D, w, d, n_tissue1, x_dimension, y_dimension, PPout, ShowColors)
 
 
 
