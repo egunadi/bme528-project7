@@ -1,177 +1,73 @@
-#====================================================================
-#  Anterior Segment Analysis Program
-#  Dewarping OCT images
-#  Zheng Ce
-#====================================================================
-
 import numpy as np
-from skimage import exposure
-from skimage.io import imread, imshow
-from PIL import Image #for resizing and saving image
-from scipy import ndimage
-from scipy.interpolate import PPoly, interp2d
-import time
 from scipy.interpolate import RegularGridInterpolator
 
-# ================================== This function is utilized to Dewarp the original image
-
-def OuterDewarp(im_s,im_t,f,w,d,n_tissue1,n_t,m_t,PPout,ShowColors):
-
+def OuterDewarp(im_s, im_t, f, w, d, n_tissue1, n_t, m_t, PPout, ShowColors):
     m_s, n_s = im_s.shape[:2]
 
-    # derived variables
-    #====================================================================
-    f_s = f/d*m_s # focal length in source coordinates
-    f_t = f/d*m_t # focal length in target coordinates
+    # Derived focal lengths
+    f_s = f/d * m_s
+    f_t = f/d * m_t
 
-    # maximal angle, scaled
-    phi_sc = np.arcsin(w/2/f)/(n_s/2)
+    # Angle scaling
+    phi_sc = np.arcsin(w / (2 * f)) / (n_s / 2)
 
-    # define all target pixel pairs
-    x_t, y_t = np.meshgrid(
-        np.arange(-n_t // 2, n_t // 2),    # ensures proper length = n_t
-        np.arange(m_t // 2, -m_t // 2, -1) # ensures proper length = m_t
-    )
+    # Target pixel coordinates
+    x_t, y_t = np.meshgrid(np.arange(-n_t/2, n_t/2), np.arange(m_t/2, -m_t/2, -1))
 
-    #====================================================================
-    # first step: remove beam scanning
-    #====================================================================
-    # calculate corresponding source pixel,
-    # taking beam scanning into account
-    x_s = np.arctan2(x_t,f_t-y_t)/phi_sc
-    y_s = f_s-np.sqrt(x_t**2 + (f_t-y_t)**2)*m_s/m_t
+    # Remove beam scanning distortion (first pass)
+    x_s = np.arctan2(x_t, f_t - y_t) / phi_sc
+    y_s = f_s - np.sqrt(x_t**2 + (f_t - y_t)**2) * (m_s / m_t)
 
-    #====================================================================
-    # second step: diffraction and index of refraction
-    # initialization
-    #====================================================================
-    # save boundary image
-    im_b = im_t[:,:,0]
+    # Initialize output grid
+    x_s_corr = np.zeros_like(x_s)
+    y_s_corr = np.zeros_like(y_s)
 
-    # initialize all hitpoints (xu,yu) on the boundary
+    # Define boundary spline (outer cornea)
     xu = np.arange(-n_t/2, n_t/2)
- 
-    # start new calculation, where the boundary begins //// This is equivalent to my 'topcornea' variable:
-    j_start = max(1, int(np.floor(np.min(m_t/2 - PPout(xu)))))
+    boundary_y = PPout(xu)
 
-    # delete, to enable progressive display
-    #im_t (j_start:m_t,:,1:2) = 0;
+    # Loop through each depth to apply refraction correction
+    for j in range(m_t):
+        y_tm = m_t/2 - j
+        B_tm = PPout(x_t[j, :])
 
-    # define # and size off variation
-    n_steps = 5
-    step_size_max = np.log10(30)
-    step_size_min = np.log10(0.1)
-    n_step_size = 5
-    steps = np.logspace(step_size_max,step_size_min,n_step_size)
+        # Above-boundary check
+        is_above = y_tm >= B_tm
+        L_above = np.sqrt(x_t[j,:]**2 + (f_t - y_tm)**2)
 
-    # reserve space for pathlength array
-    L_u = np.zeros((2*n_steps-1,n_t))
-    L_l = np.zeros((2*n_steps-1,n_t))
+        # Fermat's principle (ray tracing simplified)
+        xu_current = xu.copy()
+        for step_size in np.logspace(np.log10(30), np.log10(0.1), 5):
+            candidates = np.array([xu_current + shift * step_size for shift in range(-2, 3)])
+            candidates_y = PPout(candidates)
 
-    # all point in a line and the coresponding boundary
-    x_tm = x_t[j_start,:]
-    B_tm = PPout(x_tm) # ditto comment on line 52
+            L_u = np.sqrt(candidates**2 + (f_t - candidates_y)**2) + f_t * is_above
+            L_l = np.sqrt((x_t[j,:] - candidates)**2 + (y_tm - candidates_y)**2) * n_tissue1
 
-    j_draw = j_start
-    t_opt = 0
-    t_int = 0
-    t_plot = 0
+            L_total = L_u + L_l
+            L_total[2, :] = L_total[2, :] * (~is_above) + L_above * is_above  # Direct path if above boundary
 
-    #====================================================================
-    # find source point through Fermat's principle (minimal pathway)
-    # assumes that the point where the beam crosses the boundary shows only
-    # little variation, searches in the neighborhood with decreasing step sizes
-    #====================================================================
-    bottom_reached = 0  # for faster end
+            idx_min = np.argmin(L_total, axis=0)
+            xu_current += (idx_min - 2) * step_size
 
-    if j_start >= m_t:
-        print(f"Warning: j_start={j_start} is >= m_t={m_t}, skipping dewarping")
-        return im_t, x_s, y_s  # Or however you want to gracefully exit
+        yu = PPout(xu_current) * (~is_above) + y_tm * is_above
 
-    for j in range(j_start, m_t):
+        # Corrected coordinates
+        x_s_corr[j, :] = np.arctan2(xu_current, f_t - yu) / phi_sc
+        y_s_corr[j, :] = f_s - (np.min(L_total, axis=0) * m_s / m_t)
 
-        if not bottom_reached:
-            y_tm = m_t/2-j
-            # check, if point (x_tm,y_tm) is above boundary,
-            # and calc L for that case
-            is_above = (y_tm >= B_tm)
-            L_above = np.sqrt(x_tm**2 + (f_t-y_tm)**2)
+    # Bilinear interpolation to remap intensity
+    input_y = np.arange(m_s)
+    input_x = np.arange(n_s)
+    interp_func = RegularGridInterpolator((input_y, input_x), im_s[:, :, 1], bounds_error=False, fill_value=0)
 
-            tic = time.time()
-            # loop to iterate over decreasing step sizes
-            for step_size in steps:
-                # calc L for different points (x_um,y_um) around the last found point
-                for i in range(1,2*n_steps):
-                    x_um = xu+(i-n_steps)*step_size
-                    y_um = PPout(x_um)
-                    L_u [i-1,:] = np.sqrt((x_um)**2+(f_t-y_um)**2)+f_t*is_above
-                    L_l [i-1,:] = np.sqrt((x_tm-x_um)**2+(y_tm-y_um)**2) * n_tissue1
-                
-                L_m = L_u+L_l
-                # insert direct connection, if point (x_tm,y_tm) is above boundary
-                L_m[n_steps-1,:] = L_m[n_steps-1,:]*(1-is_above)+L_above*is_above
-                # retrive shortest pathway
-                L = np.min(L_m,axis=0)
-                index = np.argmin(L_m,axis=0)
-                # and change point of hit
-                xu = xu+(index-n_steps)*step_size
+    # Flatten and map corrected coordinates
+    interp_coords = np.vstack([(m_s/2 - y_s_corr).ravel(), (x_s_corr + n_s/2).ravel()]).T
+    remapped = interp_func(interp_coords).reshape(m_t, n_t)
 
-            # calc corresponding (xs,ys);
-            yu = PPout(xu)*(1-is_above)+(m_t/2-j)*is_above
-            xs = (np.arctan2(xu,f_t-yu)/phi_sc)
-            ys = (f_s-L*m_s/m_t)
-            # check if all source coordinates are not in the image anymore
-            bottom_reached = np.min (ys < -m_s/2)
-            # and do the transformation
-            t_opt = t_opt+(time.time()-tic)
-            tic = time.time()
-            # ************************************
-            t_int = t_int+(time.time()-tic)
+    # Create output image
+    im_t[:, :, 1] = np.clip(remapped, 0, 255).astype(np.uint8)
+    im_t[:, :, 0] = im_t[:, :, 1]
+    im_t[:, :, 2] = im_t[:, :, 1]
 
-            if j == j_start:
-                # define # and size off variation, less widely searching after the first round
-                n_steps = 3
-                step_size_max = np.log10(0.3)
-                step_size_min = np.log10(0.1)
-                n_step_size = 2
-                steps = np.logspace(step_size_max,step_size_min,n_step_size)
-                L_u = np.zeros((2*n_steps-1,n_t))
-                L_l = np.zeros((2*n_steps-1,n_t))
-        
-        x_s[j, :] = xs
-        y_s[j, :] = ys
-
-    #====================================================================
-    # biliear interpolation on the original image
-    #====================================================================
-    if ShowColors == 3:
-        # this for loop never happens cause ShowColors =1
-        for i in range(1,ShowColors):
-            interp_func = interp2d(x_s + n_s/2, m_s/2 - y_s, np.double(im_s[:, :, i]), kind='linear')
-            im_t [:,:,i] = interp_func(x_s+n_s/2,m_s/2-y_s)
-    else:
-        # Define image grid (rows = y, cols = x)
-        input_y = np.arange(im_s.shape[0])  # height (rows)
-        input_x = np.arange(im_s.shape[1])  # width (cols)
-
-        # Use green channel, consistent with MATLAB's behavior
-        channel_1 = np.double(im_s[:, :, 1])  # MATLAB uses the 2nd channel by default
-
-        # Create the interpolator
-        interp_func = RegularGridInterpolator((input_y, input_x), channel_1, bounds_error=False, fill_value=0)
-
-        # Prepare interpolation points: shape (N, 2)
-        coords = np.stack([(m_s/2 - y_s).flatten(), (x_s + n_s/2).flatten()], axis=-1)
-
-        # Interpolate and reshape
-        interpolated = interp_func(coords).reshape(y_s.shape)
-        end_row = min(j_start + interpolated.shape[0], m_t)
-        rows_to_write = end_row - j_start
-        im_t[j_start:end_row, :, 1] = np.clip(interpolated[:rows_to_write, :], 0, 255).astype(np.uint8)
-
-        # =========== potential replacement ===
-
-    im_t[:,:,0] = im_t[:,:,1]
-    im_t[:,:,2] = im_t[:,:,1]
-    
-    return im_t,x_s,y_s
+    return im_t, x_s_corr, y_s_corr
