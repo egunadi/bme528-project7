@@ -17,7 +17,7 @@ from ruptures import Pelt
 # ----------------------------------------------------------------------BASIC IMAGE PROCESSING TO DETECT OUTTER CORNEA BOUNDARY:-----------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def dynamically_trim_wings(x, y, poly_degree=3, deviation_threshold=20):
+def dynamically_trim_wings(x, y, poly_degree=3, deviation_threshold=5.4):
     """
     Trim outer wings of a boundary trace that deviate strongly from the central curve.
     """
