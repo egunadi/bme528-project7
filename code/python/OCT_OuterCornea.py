@@ -17,6 +17,33 @@ from ruptures import Pelt
 # ----------------------------------------------------------------------BASIC IMAGE PROCESSING TO DETECT OUTTER CORNEA BOUNDARY:-----------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+def dynamically_trim_wings(x, y, poly_degree=3, deviation_threshold=20):
+    """
+    Trim outer wings of a boundary trace that deviate strongly from the central curve.
+    """
+    # Fit polynomial to central region
+    poly_fit = np.polyfit(x, y, deg=poly_degree)
+    y_fit = np.polyval(poly_fit, x)
+
+    # Compute absolute deviation from fit
+    deviation = np.abs(y - y_fit)
+
+    # Smooth deviation to avoid single-point outliers
+    smooth_dev = savgol_filter(deviation, window_length=min(51, len(x) // 2 * 2 + 1), polyorder=2)
+
+    # Identify central region where deviation is low
+    central_mask = smooth_dev < deviation_threshold
+    indices = np.where(central_mask)[0]
+
+    if len(indices) < 10:
+        print("⚠️ Not enough stable points to trim wings. Returning original.")
+        return x, y
+
+    # Get stable segment
+    start, end = indices[0], indices[-1]
+
+    return x[start:end + 1], y[start:end + 1]
+
 def OCT_OuterCornea(input_image):
 
     if len(input_image.shape) == 3:  # Check if the image is colored (3 channels)
@@ -157,6 +184,9 @@ def OCT_OuterCornea(input_image):
         Rdiff = np.min(Rdiff)
         x_outter_Cornea = x_outter_Cornea[:Rdiff + 1]
         y_outter_Cornea = y_outter_Cornea[:Rdiff + 1]
+
+    # Dynamically trim the wings
+    x_outter_Cornea, y_outter_Cornea = dynamically_trim_wings(x_outter_Cornea, y_outter_Cornea)
 
     ExtCorneaStruct = {'ycornea':y_outter_Cornea,'xcornea':x_outter_Cornea,'topcornea':topcornea,'endcornea':endcornea,
                     'toplens':toplens,'BW':BW2,'rows':Rows,'columns':Columns, 'originalgray': originalgray}
