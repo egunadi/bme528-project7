@@ -200,7 +200,24 @@ CorrectedImgStr = struct('Somethingwrong',Somethingwrong,'DewarpedImg',dewarpedF
 % ------------------------------------------ Save image to folder:
 % Displaying image is optional.
 imshow(dewarpedFull)
-imwrite(dewarpedFull, "<filepath>");
+
+% Get absolute path to output directory
+output_dir = fullfile(pwd, '..', '..', 'images', 'matlab_dewarped');
+output_dir = char(java.io.File(output_dir).getCanonicalPath());  % resolves '..'
+
+% Ensure it exists
+if ~exist(output_dir, 'dir')
+    mkdir(output_dir);
+end
+
+% Extract base name
+[~, name, ~] = fileparts(uncorrectedimg);
+
+file_path = fullfile(output_dir, [name, '_Dewarped.png']);
+
+% Save image
+imwrite(dewarpedFull, file_path);
+
 % Above is to save dewarpedFull, create filename for output image
 
 % ------------------------------------------ Optional: Check that output image matches desired output
@@ -208,7 +225,7 @@ imwrite(dewarpedFull, "<filepath>");
 % to see if they 100% match. If all zeros, perfect match and it did the
 % dewarping as expected.
 im1 = dewarpedFull;
-im2 = imread("<filepath>"); % Change to the filepath of Output_CorrectedImage.png
+im2 = imread(file_path); % Change to the filepath of Output_CorrectedImage.png
 
 deltaIm = im1 - im2;
 % Check that there are no non-zero values in the matrix
