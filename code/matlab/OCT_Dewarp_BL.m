@@ -168,8 +168,6 @@ im_s = original; % this is the uint8 image
 % -------------- Call function "OuterDewarp" to dewarp original image when light passes through outer cornea interface:
 [dewarpedOut,x_s1,y_s1] = OuterDewarp(im_s, im_t, D, w, d, n_tissue1, x_dimension, y_dimension, PPout, ShowColors);
 
-
-
 % -------------- Call function "InnerDewarp" to dewarp "dewarpedOut" image (when light passes through inner cornea interface):
 [dewarpedFull,x_s2,y_s2] = InnerDewarp(im_s, dewarpedOut, D, w, d, n_tissue1, n_tissue2, x_dimension, y_dimension, PPout, PPinn, ShowColors);
 
@@ -180,7 +178,19 @@ if debug == 1
     % Extract filename without extension
     [~, name, ~] = fileparts(uncorrectedimg);
 
-    save([name, '.mat'], ... 
+    % Build path to the data directory (go up two levels)
+    data_dir = fullfile(pwd, '..', '..', 'data');
+    data_dir = char(java.io.File(data_dir).getCanonicalPath());
+
+    % Ensure the directory exists
+    if ~exist(data_dir, 'dir')
+        mkdir(data_dir);
+    end
+
+    % Build full path to the .mat file
+    debug_mat_path = fullfile(data_dir, [name, '.mat']);
+
+    save(debug_mat_path, ... 
          'originalgrayrsz', ... % input of OCT_OuterCornea()
          'Extcornea', ... % output of OCT_OuterCornea() and input of OCT_InnerCornea()
          'Intcornea', ... % output of OCT_InnerCornea()
