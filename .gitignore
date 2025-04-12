@@ -2,3 +2,4 @@
 code/matlab/*.asv
 code/.DS_Store
 code/python/__pycache__/
+code/python/utils/__pycache__/
