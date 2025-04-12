@@ -47,3 +47,42 @@ def trace_from_seed(mask, seed_point, direction):
         cols_final = [mask.shape[1] - c - 1 for c in cols_final]
 
     return cols_final, rows_final
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    # Create a medium-sized mask
+    mask = np.zeros((100, 500), dtype=np.uint8)
+
+    # Super shallow triangle coordinates
+    apex = (250, 40)       # x, y
+    left_base = (100, 60)
+    right_base = (400, 60)
+
+    # Draw original triangle
+    triangle = np.array([apex, left_base, right_base])
+    cv2.drawContours(mask, [triangle], 0, 255, -1)
+
+    # ⛏️ Crop the triangle by zeroing out everything left of x=150 and right of x=300
+    mask[:, :170] = 0
+    mask[:, 330:] = 0
+
+    # Seeds near the apex
+    seed_left = (apex[1], apex[0] - 5)
+    seed_right = (apex[1], apex[0] + 5)
+
+    # Trace from seeds
+    x_left, y_left = trace_from_seed(mask, seed_left, direction='left')
+    x_right, y_right = trace_from_seed(mask, seed_right, direction='right')
+
+    # Plotting
+    plt.figure(figsize=(6, 4))
+    plt.imshow(mask, cmap='gray', origin='upper')
+    plt.plot(x_left, y_left, 'r-', label='Left Trace')
+    plt.plot(x_right, y_right, 'b-', label='Right Trace')
+    plt.plot(seed_left[1], seed_left[0], 'ro', label='Left Seed')
+    plt.plot(seed_right[1], seed_right[0], 'bo', label='Right Seed')
+    plt.title("Test Phantom for trace_from_seed()")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
