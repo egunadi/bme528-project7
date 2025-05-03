@@ -39,28 +39,32 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
 
     print("converting to im2uint8")
     original = np.uint8(original)
-    plt.figure()
-    #plt.imshow(cv2.cvtColor(original, cv2.COLOR_BGR2RGB))  # Convert from BGR to RGB for correct display
-    plt.imshow(original)
-    plt.title("im2uint8")
-    plt.show
+
+    if debug:
+        plt.figure()
+        #plt.imshow(cv2.cvtColor(original, cv2.COLOR_BGR2RGB))  # Convert from BGR to RGB for correct display
+        plt.imshow(original)
+        plt.title("im2uint8")
+        plt.show
 
     print("reshaping image")
     sizeR, sizeC, sizeCh = original.shape
     if sizeCh < 3:
         original = cv2.cvtColor(original, cv2.COLOR_GRAY2RGB)
     
-    plt.figure()
-    plt.imshow(cv2.cvtColor(original, cv2.COLOR_BGR2RGB))
-    plt.title("reshaped")
-    plt.show()
+    if debug:
+        plt.figure()
+        plt.imshow(cv2.cvtColor(original, cv2.COLOR_BGR2RGB))
+        plt.title("reshaped")
+        plt.show()
 
     originalgray = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
 
-    plt.figure()
-    plt.imshow(originalgray, cmap='gray')
-    plt.title("grayscale")
-    plt.show()
+    if debug:
+        plt.figure()
+        plt.imshow(originalgray, cmap='gray')
+        plt.title("grayscale")
+        plt.show()
 
     # originalgray is the grayscale original modified in multiple ways
     # (dimensions etc)
@@ -238,11 +242,12 @@ def OCT_Dewarp_BL(uncorrectedimg, debug=False):
         'OriginalImage': uncorrectedimg
     }
 
-    # ------------------------------------------ Save image to folder:
-    # Displaying image is optional.
-    plt.imshow(dewarpedFull, cmap='gray')
-    plt.title("Dewarped Full Image")
-    plt.show()
+    if debug:
+        # ------------------------------------------ Save image to folder:
+        # Displaying image is optional.
+        plt.imshow(dewarpedFull, cmap='gray')
+        plt.title("Dewarped Full Image")
+        plt.show()
 
     name_only, _ = os.path.splitext(os.path.basename(uncorrectedimg))
     output_filepath = f"../images/python_dewarped/{name_only}_Dewarped.png"  # Replace with the desired output filepath
